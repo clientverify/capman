@@ -36,13 +36,13 @@
 
 	int getinput() {
 		int c;
-		klee_nuklear_make_symbolic(&c, "input");
+		klee_make_symbolic(&c, sizeof(int), "input");
 		return c;
 	}
 
 	void setbombtimer(int *bomb_timer) {
 #if defined(VARIABLE_BOMB_TIMER)
-		klee_nuklear_make_symbolic(bomb_timer, "bomb_timer");
+		klee_make_symbolic(bomb_timer, sizeof(int), "bomb_timer");
 		if (*bomb_timer > BOMB_TIMER_MAX || *bomb_timer < BOMB_TIMER_MIN) exit(1);
 #else
 		*bomb_timer = BOMB_TIMER_MAX;
@@ -288,6 +288,7 @@ int main(int argc, char* argv[]) {
 				endwin();
 				shutdown(sock, 2);
 				close(sock);
+				printf("Quiting the game.\n");
 				exit(1);
 			break;
 			case 'e':

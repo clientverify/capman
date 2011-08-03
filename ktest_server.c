@@ -40,55 +40,59 @@ static inline void ktest_check_mem() {
 }
 
 ssize_t ktest_write(int fd, const void *buf, size_t count) {
-  int i = ++num_ktest_objects;
 
-  ssize_t num_bytes = write(fd, buf, count);
+  ssize_t num_bytes = send(fd, buf, count, MSG_NOSIGNAL);
 
-  if (num_bytes >= 0) {
+  if (num_bytes > 0) {
+		int i = ++num_ktest_objects;
     ktest_check_mem();
     ktest_objects[i].name = ktest_object_names[SERVER_TO_CLIENT];
     ktest_objects[i].numBytes = num_bytes;
     ktest_objects[i].bytes = (unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
     memcpy(ktest_objects[i].bytes, buf, num_bytes);
   } else {
-    fprintf(stderr, "ERROR in ktest_write\n");
-    exit(EXIT_FAILURE);
+		if (num_bytes < 0)
+			fprintf(stderr, "ERROR in ktest_write\n");
   }
   return num_bytes;
 }
 
 
 ssize_t ktest_read(int fd, void *buf, size_t count) {
-  int i = ++num_ktest_objects;
-
   ssize_t num_bytes = read(fd, buf, count);
 
-  if (num_bytes >= 0) {
+  if (num_bytes > 0) {
+		int i = ++num_ktest_objects;
     ktest_check_mem();
     ktest_objects[i].name = ktest_object_names[CLIENT_TO_SERVER];
     ktest_objects[i].numBytes = num_bytes;
     ktest_objects[i].bytes = (unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
     memcpy(ktest_objects[i].bytes, buf, num_bytes);
   } else {
-    fprintf(stderr, "ERROR in ktest_read\n");
-    exit(EXIT_FAILURE);
+		if (num_bytes < 0)
+			fprintf(stderr, "ERROR in ktest_read\n");
   }
   return num_bytes;
 }
 
-void ktest_finish(int argc, char** argv) {
+void ktest_finish() {
   fprintf(stdout, "Writing KTest file.\n");
   KTest ktest;
-  ktest.numArgs = argc;
-  ktest.args = argv;
+  ktest.numArgs = 0;
+  ktest.args = 0;
   ktest.symArgvs = 0;
   ktest.symArgvLen = 0;
-  ktest.numObjects = num_ktest_objects;
+  ktest.numObjects = ++num_ktest_objects;
   ktest.objects = ktest_objects;
   int i;
   for (i = 0; i<num_ktest_objects; i++) {
     printf("ktest_object[%d].name = %s\n",
            i, ktest_objects[i].name);
+		printf("\t[%d]: ", ktest_objects[i].numBytes);
+		int j;
+		for (j=0; j<ktest_objects[i].numBytes; j++)
+			printf("%x", ktest_objects[i].bytes[j]);
+		printf("\n");
   }
   int result = kTest_toFile(&ktest, KTEST_FILE);
   if (!result) {
@@ -166,7 +170,7 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
  
-  for(;;) {
+  //for(;;) {
     int sock = accept(servsock, NULL, NULL);
  
     if (sock < 0) {
@@ -187,7 +191,6 @@ int main(int argc, char* argv[]) {
     initscr();
 #endif
 
-    int lenread = 0;
     int round_number = 0;
     //while (foodleft(map) > 0) {
     while (1) {
@@ -225,7 +228,8 @@ int main(int argc, char* argv[]) {
       strcpy(statusbar,"");
 
 #ifndef DUMMY_CLIENT
-      lenread = ktest_read(sock,msg,MAXMSGLEN-1); // Check read results/socket status
+      if (ktest_read(sock,msg,MAXMSGLEN-1) <= 0)
+				break;
 
       //printf("Recv: %s\n", msg);
       sscanf(msg,"%d %d %d %d %d",
@@ -247,15 +251,16 @@ int main(int argc, char* argv[]) {
         strcat(resp,tempstr);
       }
 
-      ktest_write(sock,resp,strlen(resp));
+      if (ktest_write(sock,resp,strlen(resp)) <= 0)
+				break;
     }
 
     shutdown(sock, 2);
     close(sock);
 
-    ktest_finish(argc, argv);
+    ktest_finish();
 
-  }
+  //}
 #ifndef DISABLE_GUI 
   endwin();
 #endif
