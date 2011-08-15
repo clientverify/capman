@@ -217,10 +217,15 @@ int main(int argc, char* argv[]) {
 #endif
 
 #if defined(NUKLEAR)
+	unsigned loop_count = 0;
 	human_player = 1;
 #endif 
 
   while (1) { //foodleft(map)) {
+#if defined(NUKLEAR)
+		loop_count++;
+		//cliver_training_start();
+#endif 
 
 		// begin bounds checking
 		if (status.powerup < 0) break;
@@ -235,6 +240,7 @@ int main(int argc, char* argv[]) {
 		updategamestatus(&status);
 
 #if !defined(KLEE)
+#if !defined(NUKLEAR)
 		// Draw the map
 		showmap(map,stdscr);
 		drawplayer(curr,stdscr,status,curr_dir);
@@ -257,8 +263,10 @@ int main(int argc, char* argv[]) {
 
 		wrefresh(stdscr);
 
-		if (human_player)
+		if (human_player) {
 			usleep(MOVESPEED);
+		}
+#endif
 
 		if (human_player) {
 			c = getinput();
@@ -368,7 +376,6 @@ int main(int argc, char* argv[]) {
     exit(1);
 #endif
 
-
 		if (messagetype == TYPE_1) {
 			sprintf(msg,"%d %d %d %d %d",
 						curr.x, curr.y, status.powerup, -1, -1);
@@ -389,6 +396,11 @@ int main(int argc, char* argv[]) {
 		recv(sock,resp,MAXMSGLEN,0);
 
 		updategpos(ghosts,resp);
+
+#if defined(NUKLEAR)
+		if (loop_count > 4) 
+			exit(1);
+#endif
   }
 
   endwin();

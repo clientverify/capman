@@ -28,34 +28,34 @@ int main(int argc, char* argv[]) {
   unsigned i;
 
   for (i=0; i<kt->numObjects; ++i) {
-    //printf("i=%d, name=%s\n",i,kt->objects[i].name);
+    printf("i=%d, name=%s\n",i,kt->objects[i].name);
     unsigned char* buf = kt->objects[i].bytes;
-    /*
+    ///*
        int j=0;
        for (;j<kt->objects[i].numBytes;++j)
        printf("%d:", kt->objects[i].bytes[j]);
        printf("\n");
     /**/
 
-    if (!strcmp("s2c", kt->objects[i].name)) s2c++;
+    //if (!strcmp("s2c", kt->objects[i].name)) s2c++;
 
-    int index;
-    unsigned char type;
-    if (!strcmp("c2s", kt->objects[i].name)) {
-      c2s++;
-      index = ((unsigned char)buftoint(buf+8))+12;
-      type = buf[index];
-      if (type == PKT_KEYBOARD) {
-        //printf("KEYBOARD!\n");
-        key++;
-      }
-    }
+    //int index;
+    //unsigned char type;
+    //if (!strcmp("c2s", kt->objects[i].name)) {
+    //  c2s++;
+    //  index = ((unsigned char)buftoint(buf+8))+12;
+    //  type = buf[index];
+    //  if (type == PKT_KEYBOARD) {
+    //    //printf("KEYBOARD!\n");
+    //    key++;
+    //  }
+    //}
 
-    if (buftoint(buf) != round) {
-      printf("STATS %d %d %d %d\n", round, s2c, c2s, key);
-      round = buftoint(buf);
-      c2s = s2c = key = 0;
-    }
+    //if (buftoint(buf) != round) {
+    //  printf("STATS %d %d %d %d\n", round, s2c, c2s, key);
+    //  round = buftoint(buf);
+    //  c2s = s2c = key = 0;
+    //}
   }
   return 0;
 }
